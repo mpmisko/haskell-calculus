@@ -16,13 +16,74 @@ type Env = [(String, Double)]
 
 
 lookUp :: Eq a => a -> [(a, b)] -> b
-lookUp = error "TODO implement lookUp"
+lookUp a elems = fromJust (lookup a elems)
 
 eval :: Exp -> Env -> Double
-eval = error "TODO: implement eval"
+eval (Val a) _                 = a
+eval (Id s) vals               = lookUp s vals
+eval (UnApp op exp) vals 
+  | op == Neg = (-) (0) (eval exp vals) 
+  | otherwise = (findUnFunc op) (eval exp vals)
+eval (BinApp op exp exp') vals = (findBinFunc op) (eval exp vals) (eval exp' vals)
+
+findUnFunc :: UnOp -> (Double -> Double)
+findUnFunc op = lookUp op unMapping
+  where
+    unMapping = [(Sin, sin),
+                 (Cos, cos),
+                 (Log, log)]
+                      
+
+findBinFunc :: BinOp -> (Double -> Double -> Double)
+findBinFunc op = lookUp op binMapping
+  where
+    binMapping = [(Add, (+)),
+                  (Mul, (*)),
+                  (Div, (/))]
+
 
 diff :: Exp -> String -> Exp
-diff = error "TODO: implement diff"
+diff (Val a) s  = Val 0.0
+diff (Id exp) s
+  | exp == s  = Val 1.0
+  | otherwise = Val 0.0
+diff (BinApp Add e e') s
+  = add (chain e s) (chain e' s)
+diff (BinApp Mul e e') s
+  | e == Val 0.0 || e' == Val 0.0 = Val 0.0
+  |otherwise =  add (multiply (e) (chain e' s)) (multiply (chain e s) (e'))
+diff (BinApp Div e e') s
+  = divide (sub (multiply (chain e s) (e')) (multiply (e) (chain e' s))) (multiply (e') (e'))
+diff (UnApp Sin e) s
+  | s == show(e) = UnApp Cos e 
+  | otherwise = chain (UnApp Cos e) s
+diff (UnApp Cos e) s
+  | s == show(e) = UnApp Neg (UnApp Sin e)
+  | otherwise = UnApp Neg (chain (UnApp Sin e) s)
+diff exp@(UnApp Log e) s
+  | s == show(e) = divide (Val 1) (e)
+  | otherwise = chain exp s
+diff (UnApp Neg e) s
+  = diff (multiply (Val (-1.0)) (e)) s
+diff _ _ = Id ""
+
+chain :: Exp -> String -> Exp
+chain exp@(UnApp op e) s  = multiply (diff exp (show (e))) (diff e (show (s)))
+chain exp@(BinApp op e e') s = diff exp s
+chain exp s                  = diff exp s
+
+multiply :: Exp -> Exp -> Exp
+multiply e e' = BinApp Mul e e'
+
+divide :: Exp -> Exp -> Exp
+divide e e' = BinApp Div e e'
+
+add :: Exp -> Exp -> Exp
+add e e' = BinApp Add e e'
+
+sub :: Exp -> Exp -> Exp
+sub e e' = BinApp Add e (UnApp Neg e')
+
 
 maclaurin :: Exp -> Double -> Int -> Double
 maclaurin = error "TODO: implement maclaurin"
