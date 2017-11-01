@@ -59,7 +59,7 @@ diff (UnApp Sin e) s
   | otherwise = chain (UnApp Sin e) s
 diff (UnApp Cos e) s
   | s == show(e) = UnApp Sin e
-  | otherwise = UnApp Neg (chain (UnApp Cos e) s)
+  | otherwise = chain (UnApp Cos e) s
 diff exp@(UnApp Log e) s
   | s == show(e) = divide (Val 1.0) (e)
   | otherwise = chain exp s
@@ -70,6 +70,7 @@ diff (UnApp Neg e) s
 chain :: Exp -> String -> Exp
 chain exp@(UnApp (Neg) e) s  = diff exp s
 chain (UnApp (Log) e) s      = divide (diff e s) (e)
+chain exp@(UnApp (Cos) e) s  = UnApp Neg (multiply (diff exp (show e)) (diff e s))
 chain exp@(UnApp op e) s     = multiply (diff exp (show e)) (diff e s)
 chain exp@(BinApp op e e') s = diff exp s
 chain exp s                  = diff exp s
