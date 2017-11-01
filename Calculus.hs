@@ -99,10 +99,7 @@ maclaurin exp val n
         = BinApp Div (BinApp Mul (Val (eval derivative [("x", 0.0)])) (power)) (Val fact)
 
 sumN :: Int -> [Double] -> Double
-sumN _ []           = 0
-sumN 1 (num : nums) = num
-sumN n (num : nums) = num + sumN (n-1) nums
-
+sumN n xs = sum (take n xs)
 
 showExp :: Exp -> String
 showExp (Val a) = show(a) 
