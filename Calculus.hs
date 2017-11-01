@@ -95,10 +95,8 @@ maclaurin exp val n
       facts = scanl (*) (1) [1, 2 ..]
       dervs = iterate (flip diff "x") exp
       pows  = ((Val 1) : iterate (multiply (Id "x")) (Id "x")) 
-
-createTerm :: Double -> Exp -> Exp -> Exp
-createTerm fact derivative power
-  = BinApp Div (BinApp Mul (Val (eval derivative [("x", 0.0)])) (power)) (Val fact)
+      createTerm fact derivative power
+        = BinApp Div (BinApp Mul (Val (eval derivative [("x", 0.0)])) (power)) (Val fact)
 
 sumN :: Int -> [Double] -> Double
 sumN _ []           = 0
@@ -107,7 +105,30 @@ sumN n (num : nums) = num + sumN (n-1) nums
 
 
 showExp :: Exp -> String
-showExp = error "TODO: implement showExp"
+showExp (Val a) = show(a) 
+showExp (Id s) = s
+showExp (UnApp op exp)  = (findUnStr op) ++ (bracket (showExp exp))
+showExp (BinApp op exp exp') = bracket ((showExp exp) ++ (findBinStr op) ++ (showExp exp'))
+
+bracket :: String -> String
+bracket a = "(" ++ a ++ ")"
+
+findUnStr :: UnOp -> String
+findUnStr op = lookUp op unMapping
+  where
+    unMapping = [(Sin, "sin"),
+                 (Cos, "cos"),
+                 (Log, "log"),
+                 (Neg, "-")]
+                      
+
+findBinStr :: BinOp -> String
+findBinStr op = lookUp op binMapping
+  where
+    binMapping = [(Add, "+"),
+                  (Mul, "*"),
+                  (Div, "/")]
+
 
 ---------------------------------------------------------------------------
 -- Test cases from the spec.
