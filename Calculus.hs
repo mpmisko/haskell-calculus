@@ -56,19 +56,21 @@ diff (BinApp Div e e') s
   = divide (sub (multiply (chain e s) (e')) (multiply (e) (chain e' s))) (multiply (e') (e'))
 diff (UnApp Sin e) s
   | s == show(e) = UnApp Cos e 
-  | otherwise = chain (UnApp Cos e) s
+  | otherwise = chain (UnApp Sin e) s
 diff (UnApp Cos e) s
-  | s == show(e) = UnApp Neg (UnApp Sin e)
-  | otherwise = UnApp Neg (chain (UnApp Sin e) s)
+  | s == show(e) = UnApp Sin e
+  | otherwise = UnApp Neg (chain (UnApp Cos e) s)
 diff exp@(UnApp Log e) s
-  | s == show(e) = divide (Val 1) (e)
+  | s == show(e) = divide (Val 1.0) (e)
   | otherwise = chain exp s
 diff (UnApp Neg e) s
-  = diff (multiply (Val (-1.0)) (e)) s
-diff _ _ = Id ""
+  = UnApp Neg (diff e s)
+
 
 chain :: Exp -> String -> Exp
-chain exp@(UnApp op e) s  = multiply (diff exp (show (e))) (diff e (show (s)))
+chain exp@(UnApp (Neg) e) s  = diff exp s
+chain (UnApp (Log) e) s      = divide (diff e s) (e)
+chain exp@(UnApp op e) s     = multiply (diff exp (show e)) (diff e s)
 chain exp@(BinApp op e e') s = diff exp s
 chain exp s                  = diff exp s
 
@@ -86,7 +88,22 @@ sub e e' = BinApp Add e (UnApp Neg e')
 
 
 maclaurin :: Exp -> Double -> Int -> Double
-maclaurin = error "TODO: implement maclaurin"
+maclaurin exp val n
+  = sumN n (map (flip eval [("x", val)]) (zipWith3 (createTerm) facts dervs pows))
+    where
+      facts = scanl (*) (1) [1, 2 ..]
+      dervs = iterate (flip diff "x") exp
+      pows  = ((Val 1) : iterate (multiply (Id "x")) (Id "x")) 
+
+createTerm :: Double -> Exp -> Exp -> Exp
+createTerm fact derivative power
+  = BinApp Div (BinApp Mul (Val (eval derivative [("x", 0.0)])) (power)) (Val fact)
+
+sumN :: Int -> [Double] -> Double
+sumN _ []           = 0
+sumN 1 (num : nums) = num
+sumN n (num : nums) = num + sumN (n-1) nums
+
 
 showExp :: Exp -> String
 showExp = error "TODO: implement showExp"
