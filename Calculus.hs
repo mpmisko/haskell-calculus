@@ -13,37 +13,42 @@ data Exp = Val Double | Id String | UnApp UnOp Exp | BinApp BinOp Exp Exp
 
 type Env = [(String, Double)]
 
-
-
 lookUp :: Eq a => a -> [(a, b)] -> b
-lookUp a elems = fromJust (lookup a elems)
+lookUp a elems 
+  = fromJust (lookup a elems)
 
 eval :: Exp -> Env -> Double
-eval (Val a) _                 = a
-eval (Id s) vals               = lookUp s vals
+eval (Val a) _                 
+  = a
+eval (Id s) vals               
+  = lookUp s vals
 eval (UnApp op exp) vals 
   | op == Neg = (-) (0) (eval exp vals) 
   | otherwise = (findUnFunc op) (eval exp vals)
-eval (BinApp op exp exp') vals = (findBinFunc op) (eval exp vals) (eval exp' vals)
+eval (BinApp op exp exp') vals 
+  = (findBinFunc op) (eval exp vals) (eval exp' vals)
 
 findUnFunc :: UnOp -> (Double -> Double)
-findUnFunc op = lookUp op unMapping
-  where
-    unMapping = [(Sin, sin),
-                 (Cos, cos),
-                 (Log, log)]
+findUnFunc op 
+  = lookUp op unMapping
+    where
+      unMapping = [(Sin, sin),
+                   (Cos, cos),
+                   (Log, log)]
                       
 
 findBinFunc :: BinOp -> (Double -> Double -> Double)
-findBinFunc op = lookUp op binMapping
-  where
-    binMapping = [(Add, (+)),
-                  (Mul, (*)),
-                  (Div, (/))]
+findBinFunc op
+  = lookUp op binMapping
+    where
+      binMapping = [(Add, (+)),
+                    (Mul, (*)),
+                    (Div, (/))]
 
 
 diff :: Exp -> String -> Exp
-diff (Val a) s  = Val 0.0
+diff (Val a) s 
+  = Val 0.0
 diff (Id exp) s
   | exp == s  = Val 1.0
   | otherwise = Val 0.0
@@ -51,9 +56,9 @@ diff (BinApp Add e e') s
   = add (chain e s) (chain e' s)
 diff (BinApp Mul e e') s
   | e == Val 0.0 || e' == Val 0.0 = Val 0.0
-  |otherwise =  add (multiply (e) (chain e' s)) (multiply (chain e s) (e'))
+  | otherwise =  add (mult (e) (chain e' s)) (mult (chain e s) (e'))
 diff (BinApp Div e e') s
-  = divide (sub (multiply (chain e s) (e')) (multiply (e) (chain e' s))) (multiply (e') (e'))
+  = divi (sub (mult (chain e s) (e')) (mult (e) (chain e' s))) (mult (e') (e'))
 diff (UnApp Sin e) s
   | s == show(e) = UnApp Cos e 
   | otherwise = chain (UnApp Sin e) s
@@ -61,70 +66,75 @@ diff (UnApp Cos e) s
   | s == show(e) = UnApp Sin e
   | otherwise = chain (UnApp Cos e) s
 diff exp@(UnApp Log e) s
-  | s == show(e) = divide (Val 1.0) (e)
+  | s == show(e) = divi (Val 1.0) (e)
   | otherwise = chain exp s
 diff (UnApp Neg e) s
   = UnApp Neg (diff e s)
 
 
 chain :: Exp -> String -> Exp
-chain exp@(UnApp (Neg) e) s  = diff exp s
-chain (UnApp (Log) e) s      = divide (diff e s) (e)
-chain exp@(UnApp (Cos) e) s  = UnApp Neg (multiply (diff exp (show e)) (diff e s))
-chain exp@(UnApp op e) s     = multiply (diff exp (show e)) (diff e s)
-chain exp@(BinApp op e e') s = diff exp s
-chain exp s                  = diff exp s
+chain exp@(UnApp (Neg) e) s  
+  = diff exp s
+chain (UnApp (Log) e) s      
+  = divi (diff e s) (e)
+chain exp@(UnApp (Cos) e) s  
+  = UnApp Neg (mult (diff exp (show e)) (diff e s))
+chain exp@(UnApp op e) s     
+  = mult (diff exp (show e)) (diff e s)
+chain exp@(BinApp op e e') s 
+  = diff exp s
+chain exp s                  
+  = diff exp s
 
-multiply :: Exp -> Exp -> Exp
-multiply e e' = BinApp Mul e e'
-
-divide :: Exp -> Exp -> Exp
-divide e e' = BinApp Div e e'
-
-add :: Exp -> Exp -> Exp
-add e e' = BinApp Add e e'
-
-sub :: Exp -> Exp -> Exp
+mult     = BinApp Mul
+divi     = BinApp Div
+add      = BinApp Add
 sub e e' = BinApp Add e (UnApp Neg e')
 
 
 maclaurin :: Exp -> Double -> Int -> Double
 maclaurin exp val n
-  = sumN n (map (flip eval [("x", val)]) (zipWith3 (createTerm) facts dervs pows))
+  = sumN n (map (flip eval [("x", val)]) (zipWith3 (createTerm) fs ds ps))
     where
-      facts = scanl (*) (1) [1, 2 ..]
-      dervs = iterate (flip diff "x") exp
-      pows  = ((Val 1) : iterate (multiply (Id "x")) (Id "x")) 
-      createTerm fact derivative power
-        = BinApp Div (BinApp Mul (Val (eval derivative [("x", 0.0)])) (power)) (Val fact)
+      fs = scanl (*) (1) [1, 2 ..]
+      ds = iterate (flip diff "x") exp
+      ps  = ((Val 1) : iterate (mult (Id "x")) (Id "x")) 
+      createTerm f d p
+        = BinApp Div (BinApp Mul (Val (eval d [("x", 0.0)])) (p)) (Val f)
 
 sumN :: Int -> [Double] -> Double
 sumN n xs = sum (take n xs)
 
 showExp :: Exp -> String
-showExp (Val a) = show(a) 
-showExp (Id s) = s
-showExp (UnApp op exp)  = (findUnStr op) ++ (bracket (showExp exp))
-showExp (BinApp op exp exp') = bracket ((showExp exp) ++ (findBinStr op) ++ (showExp exp'))
+showExp (Val a) 
+  = show(a) 
+showExp (Id s) 
+  = s
+showExp (UnApp op exp) 
+  = (findUnStr op) ++ (bracket (showExp exp))
+showExp (BinApp op exp exp') 
+  = bracket ((showExp exp) ++ (findBinStr op) ++ (showExp exp'))
 
 bracket :: String -> String
 bracket a = "(" ++ a ++ ")"
 
 findUnStr :: UnOp -> String
-findUnStr op = lookUp op unMapping
-  where
-    unMapping = [(Sin, "sin"),
-                 (Cos, "cos"),
-                 (Log, "log"),
-                 (Neg, "-")]
+findUnStr op 
+  = lookUp op unMapping
+    where
+      unMapping = [(Sin, "sin"),
+                   (Cos, "cos"),
+                   (Log, "log"),
+                   (Neg, "-")]
                       
 
 findBinStr :: BinOp -> String
-findBinStr op = lookUp op binMapping
-  where
-    binMapping = [(Add, "+"),
-                  (Mul, "*"),
-                  (Div, "/")]
+findBinStr op 
+  = lookUp op binMapping
+    where
+      binMapping = [(Add, "+"),
+                    (Mul, "*"),
+                    (Div, "/")]
 
 
 ---------------------------------------------------------------------------
@@ -159,12 +169,19 @@ e6 = UnApp Log (BinApp Add (BinApp Mul (Val 3.0) (BinApp Mul (Id "x") (Id "x")))
 ----------------------------------------------------------------------
 -- EXTENSION: Uncomment and complete these...
 
--- instance Num Exp where
+instance Num Exp where
+  negate      = UnApp Neg
+  (+)         = BinApp Add
+  (*)         = BinApp Mul
+  fromInteger x = Val (fromInteger x) 
 
--- instance Fractional Exp where
+instance Fractional Exp where
+  (/)    = BinApp Div
 
--- instance Floating Exp where
-
+instance Floating Exp where
+  sin    = UnApp Sin
+  cos    = UnApp Cos
+  log    = UnApp Log
 
 -- instance (Eq a, Num a) => Num (Maybe a) where
 
