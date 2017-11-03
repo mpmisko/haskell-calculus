@@ -47,7 +47,7 @@ findBinFunc op
 
 
 diff :: Exp -> String -> Exp
-diff (Val a) s 
+diff (Val a) _ 
   = Val 0.0
 diff (Id exp) s
   | exp == s  = Val 1.0
