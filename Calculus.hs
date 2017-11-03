@@ -81,8 +81,6 @@ chain exp@(UnApp (Cos) e) s
   = UnApp Neg (mult (diff exp (show e)) (diff e s))
 chain exp@(UnApp op e) s     
   = mult (diff exp (show e)) (diff e s)
-chain exp@(BinApp op e e') s 
-  = diff exp s
 chain exp s                  
   = diff exp s
 
