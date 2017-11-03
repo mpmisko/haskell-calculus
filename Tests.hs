@@ -5,7 +5,7 @@ import qualified IC.TestSuite as TS
 import Calculus
 
 evalTests
-  = [ ((Val 7),  [("x",380)])
+  = [((Val 7),  [("x",380)])
         ==> 7.0
 
     , ((Id "a"), [("x",380), ("a",42), ("t",10)])
@@ -25,6 +25,9 @@ evalTests
 
     , ((UnApp Neg (Id "x")), [("x",0.37)])
         ==> (-0.37)
+    
+    , ((Id "x"), [("x", 1)])
+        ==> (1.0)
 
     , ((UnApp Sin (Val 2.4)), [])
         ==> 0.675463180551151
@@ -90,16 +93,30 @@ diffTests
                     (BinApp Add (BinApp Mul (Val 3.0) (BinApp Mul (Id "x")
                                                                   (Id "x")))
                                 (Val 2.0))
+                                
+    , (log(x), "x") ==>
+         BinApp Div (Val 1.0) (Id "x")
     ]
 
 maclaurinTests
-  = [ (UnApp Sin (Id "x"), 2, 2) ==> 2.0
-    , (UnApp Sin (Id "x"), 2, 3) ==> 2.0
-    , (UnApp Sin (Id "x"), 2, 5) ==> 0.6666666666666667
-    , (UnApp Sin (Id "x"), 2, 7) ==> 0.9333333333333333
-    , (UnApp Sin (Id "x"), 2, 9) ==> 0.9079365079365079
-    , (UnApp Cos (Id "x"), 4, 9)  ==> (-0.39682539682539764)
+  = [ (UnApp Sin (Id "x"), 2, 2) 
+       ==> 2.0
+    , (UnApp Sin (Id "x"), 2, 3) 
+       ==> 2.0
+    , (UnApp Sin (Id "x"), 2, 5) 
+       ==> 0.6666666666666667
+    , (UnApp Sin (Id "x"), 2, 7) 
+       ==> 0.9333333333333333
+    , (UnApp Sin (Id "x"), 2, 9) 
+       ==> 0.9079365079365079
+    , (UnApp Cos (Id "x"), 4, 9) 
+       ==> (-0.39682539682539764)
+    , ((log(x+5)), 4, 5)         
+       ==> (2.157704579100767)
+    , (((log(sin(x+1)))*cos(sin(-x*x*sin(log(3))))), 2, 3) 
+       ==> (-1.7129843692752142)  
     ]
+
 
 showExpTests
   = [ Val 42 ==> "42.0"
