@@ -98,7 +98,7 @@ maclaurin exp val n
       ds = iterate (flip diff "x") exp
       ps  = ((Val 1) : iterate (mult (Id "x")) (Id "x")) 
       createTerm f d p
-        = BinApp Div (BinApp Mul (Val (eval d [("x", 0.0)])) (p)) (Val f)
+        = divi (mult (Val (eval d [("x", 0.0)])) (p)) (Val f)
 
 sumN :: Int -> [Double] -> Double
 sumN n xs = sum (take n xs)
