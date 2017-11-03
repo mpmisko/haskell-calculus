@@ -168,18 +168,18 @@ e6 = UnApp Log (BinApp Add (BinApp Mul (Val 3.0) (BinApp Mul (Id "x") (Id "x")))
 -- EXTENSION: Uncomment and complete these...
 
 instance Num Exp where
-  negate      = UnApp Neg
-  (+)         = BinApp Add
-  (*)         = BinApp Mul
+  negate        = UnApp Neg
+  (+)           = BinApp Add
+  (*)           = BinApp Mul
   fromInteger x = Val (fromInteger x) 
 
 instance Fractional Exp where
-  (/)    = BinApp Div
+  (/) = BinApp Div
 
 instance Floating Exp where
-  sin    = UnApp Sin
-  cos    = UnApp Cos
-  log    = UnApp Log
+  sin = UnApp Sin
+  cos = UnApp Cos
+  log = UnApp Log
 
 -- instance (Eq a, Num a) => Num (Maybe a) where
 
